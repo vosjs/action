@@ -73,3 +73,5 @@ Outputs: `kit`, `vos-id`, `version`, `watch-url`.
 `vos record --strict` fails the job on a skipped selector instead of shipping around it. A push against a stale base fails with the changelog of what changed on the shelf. A kit that fails its own verifier (`vos validate`) fails the job after the comment says why. Store uploads stay yours: the kit is an artifact on the run, never uploaded to a store.
 
 MIT. The CLI pair it installs, `@vosjs/cli` and `@vosso/vos-plugin`, is MIT too.
+
+The action dogfoods itself: every pull request here runs it against vos.so and carries the comment it produces.

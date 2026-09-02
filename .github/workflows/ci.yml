@@ -1,0 +1,24 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  dogfood:
+    # The action run on itself: record vos.so's own CLI page, deliver the
+    # store set, verify it, and (on a pull request) keep the comment. No key
+    # in this repo, so nothing is pushed; the comment says so.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: ./
+        with:
+          actions: test/actions.json
+          doc: ''
+          channels: cws,og
+          release: ci-${{ github.run_number }}

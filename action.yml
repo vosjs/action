@@ -1,0 +1,139 @@
+name: vos release media
+description: >-
+  Record the real product in CI, cut the release's media from it (store
+  screenshots, cards, the README loop, the demo), verify every asset against
+  its channel spec, push the take to vos.so, and keep one comment on the pull
+  request with the watch page and the kit. The next release is a re-render,
+  not a re-shoot.
+author: vosso
+branding:
+  icon: film
+  color: red
+
+inputs:
+  actions:
+    description: The click script that records the product (vos record --actions).
+    default: media/actions.json
+  doc:
+    description: The committed cut to carry onto the new footage (vos plan --reuse --from). Skipped when absent.
+    default: media/doc.json
+  channels:
+    description: The channel set vos deliver renders (cws,producthunt,x,linkedin,og,github,youtube or all).
+    default: cws,og,github
+  poster:
+    description: A poster program (config.json) for the card destinations. Optional.
+    default: ''
+  shot-time:
+    description: The take moment (output seconds) baked into the poster. Optional.
+    default: ''
+  release:
+    description: The release name stamped on the kit and the push label. Defaults to the tag, or pr-<number>.
+    default: ''
+  key:
+    description: A vos.so content key (VOS_API_KEY). Without one the take is not pushed; the kit and the comment still land.
+    default: ''
+  tracking:
+    description: The committed vos.json that says which vos the pushes version. Optional.
+    default: media/vos.json
+  comment:
+    description: Keep one sticky comment on the pull request (needs pull-requests write).
+    default: 'true'
+  take:
+    description: Where the take is recorded.
+    default: ${{ runner.temp }}/take
+
+outputs:
+  kit:
+    description: The kit directory.
+    value: ${{ steps.deliver.outputs.kit }}
+  vos-id:
+    description: The vos the take was pushed to (empty without a key).
+    value: ${{ steps.push.outputs.vos-id }}
+  version:
+    description: The version number the push created (empty without a key).
+    value: ${{ steps.push.outputs.version }}
+  watch-url:
+    description: The watch page (empty without a key).
+    value: ${{ steps.push.outputs.watch-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: name the release
+      id: name
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.release }}" ]; then echo "release=${{ inputs.release }}" >> "$GITHUB_OUTPUT"
+        elif [ "${{ github.event_name }}" = "pull_request" ]; then echo "release=pr-${{ github.event.number }}" >> "$GITHUB_OUTPUT"
+        else echo "release=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"; fi
+
+    - name: install the vos CLI
+      shell: bash
+      run: npm i -g @vosjs/cli @vosso/vos-plugin
+
+    - name: record the product
+      shell: bash
+      run: vos record --actions "${{ inputs.actions }}" --out "${{ inputs.take }}" --strict --json
+
+    - name: carry the committed cut onto the new footage
+      if: hashFiles(inputs.doc) != ''
+      shell: bash
+      run: vos plan "${{ inputs.take }}" --reuse --from "${{ inputs.doc }}" --json
+
+    - name: render the destination set
+      id: deliver
+      shell: bash
+      run: |
+        args=(deliver "${{ inputs.take }}" --to "${{ inputs.channels }}" --release "${{ steps.name.outputs.release }}" --json)
+        if [ -n "${{ inputs.poster }}" ]; then args+=(--poster "${{ inputs.poster }}"); fi
+        if [ -n "${{ inputs.shot-time }}" ]; then args+=(--shot-time "${{ inputs.shot-time }}"); fi
+        vos "${args[@]}" | tee "${{ runner.temp }}/deliver.ndjson"
+        echo "kit=${{ inputs.take }}/kit" >> "$GITHUB_OUTPUT"
+
+    - name: re-measure the kit from its bytes
+      id: validate
+      shell: bash
+      run: |
+        set +e
+        vos validate "${{ inputs.take }}/kit/kit.json" --json | tee "${{ runner.temp }}/validate.ndjson"
+        echo "status=$?" >> "$GITHUB_OUTPUT"
+        exit 0
+
+    - name: push the take, labelled for the release
+      id: push
+      if: inputs.key != ''
+      shell: bash
+      env:
+        VOS_API_KEY: ${{ inputs.key }}
+      run: |
+        if [ -f "${{ inputs.tracking }}" ]; then cp "${{ inputs.tracking }}" "${{ inputs.take }}/vos.json"; fi
+        vos push "${{ inputs.take }}" --label "${{ steps.name.outputs.release }} launch" --note "Release media from ${{ github.repository }} (${{ github.event_name }} ${{ github.sha }})" --yes --json | tee "${{ runner.temp }}/push.ndjson"
+        node "${{ github.action_path }}/scripts/outputs.mjs" "${{ runner.temp }}/push.ndjson" >> "$GITHUB_OUTPUT"
+
+    - name: attach the kit
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-kit-${{ steps.name.outputs.release }}
+        path: ${{ inputs.take }}/kit
+
+    - name: keep one comment on the pull request
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RELEASE: ${{ steps.name.outputs.release }}
+        KIT: ${{ inputs.take }}/kit/kit.json
+        PUSH: ${{ runner.temp }}/push.ndjson
+        VALIDATE: ${{ runner.temp }}/validate.ndjson
+        REPO: ${{ github.repository }}
+        PR: ${{ github.event.number }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        ARTIFACT: release-kit-${{ steps.name.outputs.release }}
+      run: node "${{ github.action_path }}/scripts/comment.mjs"
+
+    - name: the kit failed its own verifier
+      if: steps.validate.outputs.status != '0'
+      shell: bash
+      run: |
+        echo "vos validate found problems in the kit (see the step above and the comment)."
+        exit 1

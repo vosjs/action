@@ -4,14 +4,16 @@ on:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write # the dogfood commits the tracked base back after a push
   pull-requests: write
 jobs:
   dogfood:
     # The action run on itself: record vos.so's own CLI page, deliver the
-    # store set, verify it, push a version onto the tracked vos in
-    # test/vos.json (the dogfood take on the vos.so shelf) and, on a pull
-    # request, keep the comment.
+    # store set, verify it, and on a pull request keep the comment. Only a
+    # push to main versions the tracked vos in test/vos.json (the dogfood
+    # take on the vos.so shelf): a pull request run gets no key, so two
+    # branches never race for the same base, and the base main pushes from
+    # is committed back right after.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,4 +26,12 @@ jobs:
           channels: cws,og
           release: ci-${{ github.run_number }}
           tracking: test/vos.json
-          key: ${{ secrets.VOS_API_KEY }} # absent on a fork's pull request, so the push is skipped there
+          key: ${{ github.event_name == 'push' && secrets.VOS_API_KEY || '' }}
+      - name: commit the tracked base the push moved
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet -- test/vos.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Track the dogfood take at the version this run pushed' -- test/vos.json
+          git push

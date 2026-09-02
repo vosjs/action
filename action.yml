@@ -109,6 +109,13 @@ runs:
         if [ -f "${{ inputs.tracking }}" ]; then cp "${{ inputs.tracking }}" "${{ inputs.take }}/vos.json"; fi
         vos push "${{ inputs.take }}" --label "${{ steps.name.outputs.release }} launch" --note "Release media from ${{ github.repository }} (${{ github.event_name }} ${{ github.sha }})" --yes --json | tee "${{ runner.temp }}/push.ndjson"
         node "${{ github.action_path }}/scripts/outputs.mjs" "${{ runner.temp }}/push.ndjson" >> "$GITHUB_OUTPUT"
+        # The push moved the base: the take's vos.json now names the version
+        # it created. Write it back to the tracking path so the workflow can
+        # commit it, or the next push is refused as a stale base.
+        if [ -n "${{ inputs.tracking }}" ] && [ -f "${{ inputs.take }}/vos.json" ]; then
+          mkdir -p "$(dirname "${{ inputs.tracking }}")"
+          cp "${{ inputs.take }}/vos.json" "${{ inputs.tracking }}"
+        fi
 
     - name: attach the kit
       uses: actions/upload-artifact@v4

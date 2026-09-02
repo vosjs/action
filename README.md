@@ -62,7 +62,7 @@ Start with the [launch-kit skill](https://github.com/vosjs/skills) (`npx skills 
 | `shot-time` | | The take moment (output seconds) baked into the poster. |
 | `release` | tag, or `pr-<n>` | The name on the kit and the push label. |
 | `key` | | A vos.so content key. Without one the take is not pushed; the kit and the comment still land. |
-| `tracking` | `media/vos.json` | Which vos the pushes version. |
+| `tracking` | `media/vos.json` | Which vos the pushes version. After a push the action writes the new base back to this file; commit it (a step in your workflow, or a bot commit) or the next push is refused as a stale base. |
 | `comment` | `true` | Keep the sticky comment (needs `pull-requests: write`). |
 | `take` | runner temp | Where the take is recorded. |
 
@@ -72,6 +72,6 @@ Outputs: `kit`, `vos-id`, `version`, `watch-url`.
 
 `vos record --strict` fails the job on a skipped selector instead of shipping around it. A push against a stale base fails with the changelog of what changed on the shelf. A kit that fails its own verifier (`vos validate`) fails the job after the comment says why. Store uploads stay yours: the kit is an artifact on the run, never uploaded to a store.
 
-MIT. The CLI pair it installs, `@vosjs/cli` and `@vosso/vos-plugin`, is MIT too.
+MIT. The CLI it installs, `@vosjs/cli`, is MIT too.
 
 The action dogfoods itself: every pull request here runs it against vos.so and carries the comment it produces.

@@ -10,7 +10,8 @@ jobs:
   dogfood:
     # The action run on itself: record vos.so's own CLI page, deliver the
     # store set, verify it, and (on a pull request) keep the comment. No key
-    # in this repo, so nothing is pushed; the comment says so.
+    # in this repo yet; with the VOS_API_KEY secret every run versions the
+    # tracked vos in test/vos.json (the dogfood take on the vos.so shelf).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,3 +23,4 @@ jobs:
           doc: ''
           channels: cws,og
           release: ci-${{ github.run_number }}
+          tracking: test/vos.json

@@ -3,9 +3,12 @@
   "viewport": { "width": 1280, "height": 800 },
   "steps": [
     { "id": "open", "do": "wait", "ms": 1200 },
+    { "id": "park", "do": "move", "x": 900, "y": 620 },
     { "id": "hero", "do": "hover", "selector": "h1", "ms": 900 },
-    { "id": "scroll", "do": "scroll", "dy": 600 },
+    { "id": "install", "do": "hover", "selector": "code", "ms": 900 },
+    { "id": "scroll", "do": "scroll", "dy": 700 },
     { "id": "settle", "do": "wait", "ms": 1200 },
+    { "id": "section", "do": "hover", "selector": "h2", "ms": 900 },
     { "id": "end", "do": "wait", "ms": 1500 }
   ]
 }

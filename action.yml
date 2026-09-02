@@ -69,7 +69,7 @@ runs:
 
     - name: install the vos CLI
       shell: bash
-      run: npm i -g @vosjs/cli @vosso/vos-plugin
+      run: npm i -g @vosjs/cli
 
     - name: record the product
       shell: bash

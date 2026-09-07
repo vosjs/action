@@ -45,7 +45,7 @@ media/
   actions.json   the click script (the next release's script too)
   doc.json       the signed-off cut (zooms, trims, speed, all data); carried onto new footage by vos plan --reuse
   vos.json       which vos on the shelf the pushes version
-  config.json    a poster program for the card destinations, optional
+  poster/        the poster documents the card destinations render from, one per aspect class, optional
   BRAND.md       the brand kit; write it once with `vos brand https://your.app`
 ```
 
@@ -58,8 +58,6 @@ Start with the [launch-kit skill](https://github.com/vosjs/skills) (`npx skills 
 | `actions` | `media/actions.json` | The click script `vos record` drives. |
 | `doc` | `media/doc.json` | The committed cut to carry onto the new footage. Skipped when the file is absent. |
 | `channels` | `cws,og,github` | The channel set `vos deliver` renders (`cws,producthunt,x,linkedin,og,github,youtube` or `all`). |
-| `poster` | | A poster program for the card destinations. |
-| `shot-time` | | The take moment (output seconds) baked into the poster. |
 | `release` | tag, or `pr-<n>` | The name on the kit and the push label. |
 | `key` | | A vos.so content key. Without one the take is not pushed; the kit and the comment still land. |
 | `tracking` | `media/vos.json` | Which vos the pushes version. After a push the action writes the new base back to this file; commit it (a step in your workflow, or a bot commit) or the next push is refused as a stale base. |

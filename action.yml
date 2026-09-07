@@ -20,12 +20,6 @@ inputs:
   channels:
     description: The channel set vos deliver renders (cws,producthunt,x,linkedin,og,github,youtube or all).
     default: cws,og,github
-  poster:
-    description: A poster program (config.json) for the card destinations. Optional.
-    default: ''
-  shot-time:
-    description: The take moment (output seconds) baked into the poster. Optional.
-    default: ''
   release:
     description: The release name stamped on the kit and the push label. Defaults to the tag, or pr-<number>.
     default: ''
@@ -84,10 +78,7 @@ runs:
       id: deliver
       shell: bash
       run: |
-        args=(deliver "${{ inputs.take }}" --to "${{ inputs.channels }}" --release "${{ steps.name.outputs.release }}" --json)
-        if [ -n "${{ inputs.poster }}" ]; then args+=(--poster "${{ inputs.poster }}"); fi
-        if [ -n "${{ inputs.shot-time }}" ]; then args+=(--shot-time "${{ inputs.shot-time }}"); fi
-        vos "${args[@]}" | tee "${{ runner.temp }}/deliver.ndjson"
+        vos deliver "${{ inputs.take }}" --to "${{ inputs.channels }}" --release "${{ steps.name.outputs.release }}" --json | tee "${{ runner.temp }}/deliver.ndjson"
         echo "kit=${{ inputs.take }}/kit" >> "$GITHUB_OUTPUT"
 
     - name: re-measure the kit from its bytes

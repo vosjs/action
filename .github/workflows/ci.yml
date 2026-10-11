@@ -8,7 +8,7 @@ permissions:
   pull-requests: write
 jobs:
   dogfood:
-    # The action run on itself: record vos.so's own CLI page, deliver the
+    # The action run on itself: record vos.so's own agents page, deliver the
     # README loop, verify it, and on a pull request keep the comment. Only a
     # push to main versions the tracked vos in test/vos.json (the dogfood
     # take on the vos.so shelf): a pull request run gets no key, so two

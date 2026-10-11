@@ -1,8 +1,8 @@
 name: vos release media
 description: >-
-  Record the real product in CI, cut the release's media from it (store
-  screenshots, cards, the README loop, the demo), verify every asset against
-  its channel spec, push the take to vos.so, and keep one comment on the pull
+  Record the real product in CI, cut the release's videos from it (the README
+  loop, the feed and vertical cuts, the demo), verify every cut against its
+  channel spec, push the take to vos.so, and keep one comment on the pull
   request with the watch page and the kit. The next release is a re-render,
   not a re-shoot.
 author: vosso
@@ -18,8 +18,8 @@ inputs:
     description: The committed cut to carry onto the new footage (vos plan --reuse --from). Skipped when absent.
     default: media/doc.json
   channels:
-    description: The channel set vos deliver renders (cws,producthunt,x,linkedin,og,github,youtube or all).
-    default: cws,og,github
+    description: The channel set vos deliver renders (youtube,x,shorts-linkedin,github or all).
+    default: github
   release:
     description: The release name stamped on the kit and the push label. Defaults to the tag, or pr-<number>.
     default: ''

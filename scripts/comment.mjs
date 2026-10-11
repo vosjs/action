@@ -49,11 +49,9 @@ if (push?.vosId) {
   )
 }
 if (kit?.assets?.length) {
-  lines.push('| Channel | Asset | Size | Bytes | Length | Moment |', '| --- | --- | --- | --- | --- | --- |')
+  lines.push('| Channel | Asset | Size | Bytes | Length |', '| --- | --- | --- | --- | --- |')
   for (const a of kit.assets) {
-    lines.push(
-      `| ${a.channel} | ${a.asset}${a.source === 'poster' ? ' (poster)' : ''} | ${a.w}x${a.h} | ${kb(a.bytes)} | ${secs(a.seconds)} | ${a.frameTime !== null && a.frameTime !== undefined ? `${a.frameTime.toFixed(1)} s` : ''} |`,
-    )
+    lines.push(`| ${a.channel} | ${a.asset} | ${a.w}x${a.h} | ${kb(a.bytes)} | ${secs(a.seconds)} |`)
   }
   lines.push('')
 }

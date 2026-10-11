@@ -1,5 +1,5 @@
 {
-  "url": "https://vos.so/cli",
+  "url": "https://vos.so/agents",
   "viewport": { "width": 1280, "height": 800 },
   "steps": [
     { "id": "open", "do": "wait", "ms": 1200 },
@@ -9,6 +9,6 @@
     { "id": "scroll", "do": "scroll", "dy": 700 },
     { "id": "settle", "do": "wait", "ms": 1200 },
     { "id": "section", "do": "hover", "selector": "h2", "ms": 900 },
-    { "id": "end", "do": "wait", "ms": 1500 }
+    { "id": "end", "do": "wait", "ms": 6000 }
   ]
 }

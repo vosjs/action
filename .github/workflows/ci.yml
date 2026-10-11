@@ -8,8 +8,8 @@ permissions:
   pull-requests: write
 jobs:
   dogfood:
-    # The action run on itself: record vos.so's own CLI page, deliver the
-    # store set, verify it, and on a pull request keep the comment. Only a
+    # The action run on itself: record vos.so's own agents page, deliver the
+    # README loop, verify it, and on a pull request keep the comment. Only a
     # push to main versions the tracked vos in test/vos.json (the dogfood
     # take on the vos.so shelf): a pull request run gets no key, so two
     # branches never race for the same base, and the base main pushes from
@@ -23,7 +23,7 @@ jobs:
         with:
           actions: test/actions.json
           doc: ''
-          channels: cws,og
+          channels: github
           release: ci-${{ github.run_number }}
           tracking: test/vos.json
           key: ${{ github.event_name == 'push' && secrets.VOS_API_KEY || '' }}

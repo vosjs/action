@@ -1,0 +1,5 @@
+# The action's steps and its workflows run with every caller's token and key:
+# a change to them is reviewed by the maintainer, whoever opened it.
+/action.yml @hblee12294
+/scripts/ @hblee12294
+/.github/ @hblee12294

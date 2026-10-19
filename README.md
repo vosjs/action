@@ -23,6 +23,8 @@ jobs:
           key: ${{ secrets.VOS_API_KEY }} # mint one at vos.so/app/api
 ```
 
+Pin the action to a commit in your own workflow (`vosjs/action@<sha> # v1`) and let Dependabot move it: the steps above run with your job's token and your key, and a floating tag is whatever its owner's account pushes next.
+
 What lands on the pull request:
 
 > ### Release media for `pr-42`
@@ -62,6 +64,7 @@ Start with the [launch-kit skill](https://github.com/vosjs/skills) (`npx skills 
 | `tracking` | `media/vos.json` | Which vos the pushes version. After a push the action writes the new base back to this file; commit it (a step in your workflow, or a bot commit) or the next push is refused as a stale base. |
 | `comment` | `true` | Keep the sticky comment (needs `pull-requests: write`). |
 | `take` | runner temp | Where the take is recorded. |
+| `cli` | the version this action was released with | The `@vosjs/cli` version it runs, an exact version. Pinned on purpose: an unpinned install would run whatever npm served that minute with the job's token and your key. Each release of the action moves the default. |
 
 Outputs: `kit`, `vos-id`, `version`, `watch-url`.
 

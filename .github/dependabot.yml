@@ -1,0 +1,12 @@
+# The actions this action and its CI use are pinned to commits (a floating
+# tag is whatever its owner's account pushes next); this is what moves the
+# pins, one grouped pull request a week.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

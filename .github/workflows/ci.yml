@@ -3,9 +3,8 @@ on:
   pull_request:
   push:
     branches: [main]
-permissions:
-  contents: write # the dogfood commits the tracked base back after a push
-  pull-requests: write
+# Nothing by default; the job names what it holds.
+permissions: {}
 jobs:
   dogfood:
     # The action run on itself: record vos.so's own agents page, deliver the
@@ -15,9 +14,13 @@ jobs:
     # branches never race for the same base, and the base main pushes from
     # is committed back right after.
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # the dogfood commits the tracked base back after a push
+      pull-requests: write # the sticky comment
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Pinned to commits, moved by Dependabot (.github/dependabot.yml).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22 }
       - uses: ./
         with:

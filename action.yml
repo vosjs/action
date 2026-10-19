@@ -35,6 +35,12 @@ inputs:
   take:
     description: Where the take is recorded.
     default: ${{ runner.temp }}/take
+  cli:
+    description: >-
+      The @vosjs/cli version this action runs. Pinned, because an unpinned
+      install runs whatever npm served that minute, with the job's token and
+      your key; moved by the action's own releases.
+    default: '0.75.1'
 
 outputs:
   kit:
@@ -50,43 +56,69 @@ outputs:
     description: The watch page (empty without a key).
     value: ${{ steps.push.outputs.watch-url }}
 
+# Every input reaches a shell through `env`, never spliced into the script:
+# an input is whatever the calling workflow put there, and a `${{ }}` inside
+# `run` is substituted before the shell parses it.
 runs:
   using: composite
   steps:
     - name: name the release
       id: name
       shell: bash
+      env:
+        RELEASE: ${{ inputs.release }}
+        EVENT: ${{ github.event_name }}
+        PR_NUMBER: ${{ github.event.number }}
+        REF_NAME: ${{ github.ref_name }}
       run: |
-        if [ -n "${{ inputs.release }}" ]; then echo "release=${{ inputs.release }}" >> "$GITHUB_OUTPUT"
-        elif [ "${{ github.event_name }}" = "pull_request" ]; then echo "release=pr-${{ github.event.number }}" >> "$GITHUB_OUTPUT"
-        else echo "release=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"; fi
+        if [ -n "$RELEASE" ]; then echo "release=$RELEASE" >> "$GITHUB_OUTPUT"
+        elif [ "$EVENT" = "pull_request" ]; then echo "release=pr-$PR_NUMBER" >> "$GITHUB_OUTPUT"
+        else echo "release=$REF_NAME" >> "$GITHUB_OUTPUT"; fi
 
     - name: install the vos CLI
       shell: bash
-      run: npm i -g @vosjs/cli
+      env:
+        CLI: ${{ inputs.cli }}
+      run: |
+        case "$CLI" in
+          *[!0-9.]*|'') echo "::error::cli must be an exact version, got '$CLI'"; exit 1 ;;
+        esac
+        npm i -g "@vosjs/cli@$CLI"
 
     - name: record the product
       shell: bash
-      run: vos record --actions "${{ inputs.actions }}" --out "${{ inputs.take }}" --strict --json
+      env:
+        ACTIONS: ${{ inputs.actions }}
+        TAKE: ${{ inputs.take }}
+      run: vos record --actions "$ACTIONS" --out "$TAKE" --strict --json
 
     - name: carry the committed cut onto the new footage
       if: hashFiles(inputs.doc) != ''
       shell: bash
-      run: vos plan "${{ inputs.take }}" --reuse --from "${{ inputs.doc }}" --json
+      env:
+        DOC: ${{ inputs.doc }}
+        TAKE: ${{ inputs.take }}
+      run: vos plan "$TAKE" --reuse --from "$DOC" --json
 
     - name: render the destination set
       id: deliver
       shell: bash
+      env:
+        TAKE: ${{ inputs.take }}
+        CHANNELS: ${{ inputs.channels }}
+        RELEASE: ${{ steps.name.outputs.release }}
       run: |
-        vos deliver "${{ inputs.take }}" --to "${{ inputs.channels }}" --release "${{ steps.name.outputs.release }}" --json | tee "${{ runner.temp }}/deliver.ndjson"
-        echo "kit=${{ inputs.take }}/kit" >> "$GITHUB_OUTPUT"
+        vos deliver "$TAKE" --to "$CHANNELS" --release "$RELEASE" --json | tee "$RUNNER_TEMP/deliver.ndjson"
+        echo "kit=$TAKE/kit" >> "$GITHUB_OUTPUT"
 
     - name: re-measure the kit from its bytes
       id: validate
       shell: bash
+      env:
+        TAKE: ${{ inputs.take }}
       run: |
         set +e
-        vos validate "${{ inputs.take }}/kit/kit.json" --json | tee "${{ runner.temp }}/validate.ndjson"
+        vos validate "$TAKE/kit/kit.json" --json | tee "$RUNNER_TEMP/validate.ndjson"
         echo "status=$?" >> "$GITHUB_OUTPUT"
         exit 0
 
@@ -96,20 +128,27 @@ runs:
       shell: bash
       env:
         VOS_API_KEY: ${{ inputs.key }}
+        TAKE: ${{ inputs.take }}
+        TRACKING: ${{ inputs.tracking }}
+        RELEASE: ${{ steps.name.outputs.release }}
+        REPO: ${{ github.repository }}
+        EVENT: ${{ github.event_name }}
+        SHA: ${{ github.sha }}
+        ACTION_PATH: ${{ github.action_path }}
       run: |
-        if [ -f "${{ inputs.tracking }}" ]; then cp "${{ inputs.tracking }}" "${{ inputs.take }}/vos.json"; fi
-        vos push "${{ inputs.take }}" --label "${{ steps.name.outputs.release }} launch" --note "Release media from ${{ github.repository }} (${{ github.event_name }} ${{ github.sha }})" --yes --json | tee "${{ runner.temp }}/push.ndjson"
-        node "${{ github.action_path }}/scripts/outputs.mjs" "${{ runner.temp }}/push.ndjson" >> "$GITHUB_OUTPUT"
+        if [ -f "$TRACKING" ]; then cp "$TRACKING" "$TAKE/vos.json"; fi
+        vos push "$TAKE" --label "$RELEASE launch" --note "Release media from $REPO ($EVENT $SHA)" --yes --json | tee "$RUNNER_TEMP/push.ndjson"
+        node "$ACTION_PATH/scripts/outputs.mjs" "$RUNNER_TEMP/push.ndjson" >> "$GITHUB_OUTPUT"
         # The push moved the base: the take's vos.json now names the version
         # it created. Write it back to the tracking path so the workflow can
         # commit it, or the next push is refused as a stale base.
-        if [ -n "${{ inputs.tracking }}" ] && [ -f "${{ inputs.take }}/vos.json" ]; then
-          mkdir -p "$(dirname "${{ inputs.tracking }}")"
-          cp "${{ inputs.take }}/vos.json" "${{ inputs.tracking }}"
+        if [ -n "$TRACKING" ] && [ -f "$TAKE/vos.json" ]; then
+          mkdir -p "$(dirname "$TRACKING")"
+          cp "$TAKE/vos.json" "$TRACKING"
         fi
 
     - name: attach the kit
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: release-kit-${{ steps.name.outputs.release }}
         path: ${{ inputs.take }}/kit
@@ -127,7 +166,8 @@ runs:
         PR: ${{ github.event.number }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         ARTIFACT: release-kit-${{ steps.name.outputs.release }}
-      run: node "${{ github.action_path }}/scripts/comment.mjs"
+        ACTION_PATH: ${{ github.action_path }}
+      run: node "$ACTION_PATH/scripts/comment.mjs"
 
     - name: the kit failed its own verifier
       if: steps.validate.outputs.status != '0'

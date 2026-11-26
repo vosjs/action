@@ -1,6 +1,45 @@
-# vos release media, on every pull request
+<p align="center">
+  <a href="https://vos.so/docs/share/every-release">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/lockup-dark.svg">
+      <img alt="vos action" src=".github/assets/lockup-light.svg" height="56">
+    </picture>
+  </a>
+</p>
 
-A GitHub Action that records the real product in CI, cuts the release's videos from it (the README loop, the feed and vertical cuts, the demo), verifies every cut against its channel spec, pushes the take to [vos.so](https://vos.so), and keeps **one comment on the pull request** with the watch page and the kit. The next release is a re-render of the same click script, not a re-shoot.
+<h3 align="center">Release media on every pull request.</h3>
+
+<p align="center">
+  Record the real product in CI, cut the release's videos, verify each one,<br>
+  and keep one comment on the pull request with the link.
+</p>
+
+<p align="center">
+  <a href="https://vos.so/docs/share/every-release">Guide</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/vosjs/skills">Skills</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/vosjs/vos">Engine</a>
+  &nbsp;·&nbsp;
+  <a href="https://vos.so">vos.so</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/vosjs/action/tags"><img alt="Version" src="https://img.shields.io/github/v/tag/vosjs/action?style=flat&color=0b0b0d&label=action"></a>
+  <a href="./LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-0b0b0d?style=flat"></a>
+</p>
+
+<br>
+
+<a href="https://vos.so/vos/next-release">
+  <img alt="One click script recorded on three releases of the three.js editor; each lands as a new version of the same video." src=".github/assets/hero.webp" width="100%">
+</a>
+
+<p align="center"><sub>One click script, recorded on three releases of the three.js editor. Each release is a new version of the same video. <a href="https://vos.so/vos/next-release">Watch it with sound</a>.</sub></p>
+
+<br>
+
+## Usage
 
 ```yaml
 name: release media
@@ -23,9 +62,10 @@ jobs:
           key: ${{ secrets.VOS_API_KEY }} # mint one at vos.so/app/api
 ```
 
-Pin the action to a commit in your own workflow (`vosjs/action@<sha> # v1`) and let Dependabot move it: the steps above run with your job's token and your key, and a floating tag is whatever its owner's account pushes next.
+> [!TIP]
+> Pin the action to a commit in your own workflow (`vosjs/action@<sha> # v1`) and let Dependabot move it. It runs with your job's token and your key, and a floating tag is whatever gets pushed to it next.
 
-What lands on the pull request:
+## What lands on the pull request
 
 > ### Release media for `pr-42`
 >
@@ -38,40 +78,44 @@ What lands on the pull request:
 >
 > **Verifier:** 0 problems across 2 assets, re-measured from their bytes.
 
-The comment is found by its marker and updated in place, so a pull request with ten pushes has one comment, not ten. Reviewers, QA and marketing sign off on a link instead of pulling the branch. The same run on a tag is the release.
+One comment, updated in place: ten pushes leave one comment, not ten. Reviewers sign off on a link instead of pulling the branch, and the same run on a tag is the release.
 
-## What the repo carries
+## What your repo carries
 
 ```
 media/
-  actions.json   the click script (the next release's script too)
-  doc.json       the signed-off cut (zooms, trims, speed, all data); carried onto new footage by vos plan --reuse
-  vos.json       which vos on the shelf the pushes version
+  actions.json   the click script, and the next release's too
+  doc.json       the signed-off cut (zooms, trims, speed), carried onto new footage
+  vos.json       which vos on vos.so the pushes version
   BRAND.md       the brand kit; write it once with `vos brand https://your.app`
 ```
 
-Start with the [launch-kit skill](https://github.com/vosjs/skills) (`npx skills add vosjs/skills`) or the [every-release guide](https://vos.so/docs/guides/every-release); the action runs what the skill produced.
+The [launch-kit skill](https://github.com/vosjs/skills) writes these with you, and the [every-release guide](https://vos.so/docs/share/every-release) walks through it. The action runs what they produced.
 
 ## Inputs
 
-| Input | Default | What it does |
+| Input | Default | |
 | --- | --- | --- |
+| `key` | | A vos.so content key. Without one nothing is pushed; the kit and the comment still land. |
+| `channels` | `github` | What `vos deliver` renders: `youtube,x,shorts-linkedin,github` or `all`. A cut longer than the take allows is skipped with the reason. |
 | `actions` | `media/actions.json` | The click script `vos record` drives. |
-| `doc` | `media/doc.json` | The committed cut to carry onto the new footage. Skipped when the file is absent. |
-| `channels` | `github` | The channel set `vos deliver` renders (`youtube,x,shorts-linkedin,github` or `all`). A cut longer than the take allows is skipped with the reason. |
-| `release` | tag, or `pr-<n>` | The name on the kit and the push label. |
-| `key` | | A vos.so content key. Without one the take is not pushed; the kit and the comment still land. |
-| `tracking` | `media/vos.json` | Which vos the pushes version. After a push the action writes the new base back to this file; commit it (a step in your workflow, or a bot commit) or the next push is refused as a stale base. |
+| `doc` | `media/doc.json` | The cut to carry onto the new footage. Skipped when absent. |
+| `release` | the tag, or `pr-<n>` | The name on the kit and the push label. |
+| `tracking` | `media/vos.json` | Which vos the pushes version. The action writes the new base back here; commit it, or the next push is refused as a stale base. |
 | `comment` | `true` | Keep the sticky comment (needs `pull-requests: write`). |
 | `take` | runner temp | Where the take is recorded. |
-| `cli` | the version this action was released with | The `@vosjs/cli` version it runs, an exact version. Pinned on purpose: an unpinned install would run whatever npm served that minute with the job's token and your key. Each release of the action moves the default. |
+| `cli` | this release's | The exact `@vosjs/cli` version it runs, pinned so the job never runs whatever npm served that minute. Each release of the action moves it. |
 
-Outputs: `kit`, `vos-id`, `version`, `watch-url`.
+**Outputs:** `kit`, `vos-id`, `version`, `watch-url`.
 
 ## What it refuses
 
-`vos record --strict` fails the job on a skipped selector instead of shipping around it. A push against a stale base fails with the changelog of what changed on the shelf. A kit that fails its own verifier (`vos validate`) fails the job after the comment says why. Uploads stay yours: the kit is an artifact on the run, never uploaded anywhere for you.
+- **A skipped click.** `vos record --strict` fails the job rather than ship around a missing selector.
+- **A stale base.** A push against an outdated `vos.json` fails with the changelog of what changed on vos.so.
+- **A kit that fails its own check.** `vos validate` fails the job, after the comment says why.
 
-MIT. The CLI it installs, `@vosjs/cli`, is MIT too.
+Your files stay yours: the kit is an artifact on the run, never uploaded anywhere for you. This repo runs the action on its own pull requests.
 
-The action dogfoods itself: every pull request here runs it against vos.so and carries the comment it produces.
+## License
+
+[MIT](./LICENSE). The CLI it installs, [`@vosjs/cli`](https://www.npmjs.com/package/@vosjs/cli), is MIT too.
